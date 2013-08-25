@@ -12,7 +12,10 @@
             geonamesCountry: 'NL',
             geonamesLanguage: 'nl',
             html5Label: 'My device location',
-            activatedValidators: ['postcodeNL', 'citiesNL', 'html5']
+            activatedValidators: ['postcodeNL', 'citiesNL', 'html5'],
+            success: function(lat, lng) {
+                return;
+            }
         };
 
     // Plugin constructor.
@@ -37,6 +40,7 @@
             // Add clear action.
             $(parent.element).next('.location-validator-clear').click(function() {
                 parent.clear();
+                return false;
             });
 
             // Init jquery ui autocomplete.
@@ -107,7 +111,7 @@
         success: function(lat, lng) {
             parent = this;
 
-            alert(lat + ', ' + lng);
+            parent.options.success(lat, lng);
         }
 
     };
