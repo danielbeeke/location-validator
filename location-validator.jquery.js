@@ -11,7 +11,8 @@
             geonamesUsername: 'danielbeeke',
             geonamesCountry: 'NL',
             geonamesLanguage: 'nl',
-            activatedValidators: ['postcodeNL', 'citiesNL']
+            html5Label: 'My device location',
+            activatedValidators: ['postcodeNL', 'citiesNL', 'html5']
         };
 
     // Plugin constructor.
@@ -30,10 +31,21 @@
         init: function() {
             parent = this;
 
+            // Attach clean button.
+            $(parent.element).after('<a href="#" class="location-validator-clear hidden">x</a>');
+
+            // Add clear action.
+            $(parent.element).next('.location-validator-clear').click(function() {
+                parent.clear();
+            });
+
             // Init jquery ui autocomplete.
             $(parent.element).autocomplete({
                 source: function(request, response) {
                     $(parent.element).addClass('validating');
+
+                    // Show the clear button.
+                    $(parent.element).next('.location-validator-clear').removeClass('hidden');
 
                     var autocompletions = [];
 
@@ -57,10 +69,25 @@
                     response(autocompletions);
                 }
             }).data('ui-autocomplete')._renderItem = function( ul, item ) {
-                return $('<li>')
+                var anchor = $('<li>')
                 .append('<a>' + item.label)
                 .appendTo(ul);
+
+                $(anchor).click(function() {
+                    if (item.action) {
+                        item.action();
+                    }
+                });
+
+                return anchor;
             };
+        },
+
+        clear: function() {
+            parent = this;
+
+            $(parent.element).val('');
+            $(parent.element).next('.location-validator-clear').addClass('hidden');
         }
 
     };
@@ -133,7 +160,8 @@
         render: function(item) {
             return {
                 label: '<strong>' + item.postalCode + '</strong>' + ' <em>' + item.placeName + ', ' + item.adminName2 + '</em>',
-                value:  item.postalCode + ' ' + item.placeName + ', ' + item.adminName2
+                value:  item.postalCode + ' ' + item.placeName + ', ' + item.adminName2,
+                data: item
             }
         }
     };
@@ -174,8 +202,35 @@
         render: function(item) {
             return {
                 label: '<strong>' + item.name + '</strong>' + ' <em>' + item.adminName1 + '</em>',
-                value: item.name
+                value: item.name + ', ' + item.adminName1,
+                data: item
             }
+        }
+    };
+
+
+    // html5 geolocation class.
+    $.fn[pluginName].validators.html5 = {
+        validate: function(parent) {
+            if (navigator.geolocation) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        },
+
+        autocomplete: function(parent) {
+            return [{
+                label: parent.options.html5Label,
+                value: parent.options.html5Label,
+                action: function() {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        console.log(position.coords.longitude);
+                    });
+
+                }
+            }];
         }
     };
 
