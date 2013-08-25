@@ -10,7 +10,8 @@
         defaults = {
             geonamesUsername: 'danielbeeke',
             geonamesCountry: 'NL',
-            activatedValidators: ['postcodeNL', 'countryNL']
+            geonamesLanguage: 'nl',
+            activatedValidators: ['postcodeNL', 'citiesNL']
         };
 
     // Plugin constructor.
@@ -111,7 +112,9 @@
                 '&maxRows=10&username=' + 
                 parent.options.geonamesUsername + 
                 '&style=full&country=' +
-                parent.options.geonamesCountry;
+                parent.options.geonamesCountry +
+                '&lang=' +
+                parent.options.geonamesLanguage;
 
             var autocompletions = {};
 
@@ -130,15 +133,49 @@
         render: function(item) {
             return {
                 label: '<strong>' + item.postalCode + '</strong>' + ' <em>' + item.placeName + ', ' + item.adminName2 + '</em>',
-                value: item.postalCode
+                value:  item.postalCode + ' ' + item.placeName + ', ' + item.adminName2
             }
         }
     };
 
-    // NL country class.
-    $.fn[pluginName].validators.countryNL = {
+    // NL cities class.
+    $.fn[pluginName].validators.citiesNL = {
         validate: function(parent) {
             return !$.isNumeric($(parent.element).val());
+        },
+
+        autocomplete: function(parent) {
+            var string = $(parent.element).val();
+
+            var url = 'http://api.geonames.org/searchJSON?name_startsWith=' +
+                string + 
+                '&country=' + 
+                parent.options.geonamesCountry + 
+                '&featureClass=P' + 
+                '&maxRows=10&username=' + 
+                parent.options.geonamesUsername +
+                '&lang=' +
+                parent.options.geonamesLanguage;
+
+            var autocompletions = {};
+
+            $.ajax({
+                url: url,
+                async: false
+            }).done(function(data) {
+                $.each(data.geonames, function(index, item) {
+                    autocompletions[item.geonameId] = $.fn[pluginName].validators.citiesNL.render(item);
+                });
+            });
+
+            return autocompletions;
+        },
+
+        render: function(item) {
+            return {
+                label: '<strong>' + item.name + '</strong>' + ' <em>' + item.adminName1 + '</em>',
+                value: item.name
+            }
         }
     };
 
