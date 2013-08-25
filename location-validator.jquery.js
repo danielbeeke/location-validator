@@ -75,8 +75,14 @@
 
                 $(anchor).click(function() {
                     if (item.action) {
-                        item.action();
+                        item.action(parent);
+                        parent.lock();
                     }
+                    else if (item.data.lat && item.data.lng) {
+                        parent.success(item.data.lat, item.data.lng);
+                        parent.lock();
+                    }
+
                 });
 
                 return anchor;
@@ -86,8 +92,22 @@
         clear: function() {
             parent = this;
 
+            $(parent.element).removeAttr('disabled');
             $(parent.element).val('');
             $(parent.element).next('.location-validator-clear').addClass('hidden');
+        },
+
+        lock: function() {
+            parent = this;
+
+            $(parent.element).attr('disabled', 'disabled');
+            $(parent.element).next('.location-validator-clear').removeClass('hidden');
+        },
+
+        success: function(lat, lng) {
+            parent = this;
+
+            alert(lat + ', ' + lng);
         }
 
     };
@@ -224,9 +244,9 @@
             return [{
                 label: parent.options.html5Label,
                 value: parent.options.html5Label,
-                action: function() {
+                action: function(parent) {
                     navigator.geolocation.getCurrentPosition(function(position) {
-                        console.log(position.coords.longitude);
+                        parent.success(position.coords.latitude, position.coords.longitude);
                     });
 
                 }
